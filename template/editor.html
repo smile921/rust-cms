@@ -1,0 +1,75 @@
+<!-- templates/editor.html -->
+<!doctype html>
+<html>
+    <head>
+        <title>Write New Post</title>
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css"
+        />
+        <script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
+        <style>
+            body {
+                max-width: 800px;
+                margin: 20px auto;
+                padding: 20px;
+                font-family: sans-serif;
+            }
+            input {
+                width: 100%;
+                padding: 10px;
+                margin-bottom: 20px;
+                font-size: 1.2em;
+            }
+            button {
+                padding: 10px 20px;
+                background: #333;
+                color: #fff;
+                cursor: pointer;
+            }
+        </style>
+    </head>
+    <body>
+        <!-- [新增] 使用隐藏域存储后端传来的 Token -->
+        <input type="hidden" id="admin-token" value="{{ admin_token }}" />
+        <h1>New Post</h1>
+        <input type="text" id="title" placeholder="Post Title" />
+        <textarea id="my-editor"></textarea>
+        <button onclick="submitPost()">Publish</button>
+
+        <script>
+            // 获取 Token
+            const token = document.getElementById("admin-token").value;
+
+            const easyMDE = new EasyMDE({
+                element: document.getElementById("my-editor"),
+                uploadImage: true,
+                // 修改上传接口，带上 Token
+                imageUploadEndpoint: "/api/upload?token=" + token,
+                imagePathAbsolute: true,
+            });
+
+            async function submitPost() {
+                const title = document.getElementById("title").value;
+                const content = easyMDE.value();
+
+                // 发布文章接口，带上 Token (这里演示放在 Header 中，更规范)
+                const res = await fetch("/api/posts", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: token, // 发送 Token
+                    },
+                    body: JSON.stringify({ title, content }),
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    window.location.href = `/post/${data.slug}`;
+                } else {
+                    alert("Failed to publish: Unauthorized");
+                }
+            }
+        </script>
+    </body>
+</html>
