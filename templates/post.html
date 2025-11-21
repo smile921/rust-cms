@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>{{ post.title }}</title>
+        <style>
+            body {
+                max-width: 800px;
+                margin: 2rem auto;
+                padding: 0 1rem;
+                font-family: system-ui, sans-serif;
+                line-height: 1.8;
+                color: #333;
+            }
+            header {
+                margin-bottom: 2rem;
+                border-bottom: 1px solid #eee;
+                padding-bottom: 1rem;
+            }
+            h1 {
+                margin-bottom: 0.5rem;
+            }
+            .meta {
+                color: #666;
+                font-size: 0.9rem;
+            }
+            article img {
+                max-width: 100%;
+                height: auto;
+                border-radius: 8px;
+            }
+            pre {
+                background: #f4f4f4;
+                padding: 1rem;
+                overflow-x: auto;
+                border-radius: 4px;
+            }
+            blockquote {
+                border-left: 4px solid #ddd;
+                padding-left: 1rem;
+                color: #555;
+                margin: 1rem 0;
+            }
+            a {
+                color: #0070f3;
+            }
+        </style>
+    </head>
+    <body>
+        <header>
+            <h1>{{ post.title }}</h1>
+            <div class="meta">
+                Published on {{ post.created_at }} ·
+                <a href="/">Back to Home</a>
+            </div>
+        </header>
+
+        <article>
+            <!-- 这里渲染的是 Markdown 转换后的 HTML -->
+            {{ content_html | safe }}
+        </article>
+    </body>
+</html>

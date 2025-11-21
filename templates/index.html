@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>My Rust Blog</title>
+        <style>
+            body {
+                max-width: 800px;
+                margin: 2rem auto;
+                padding: 0 1rem;
+                font-family: system-ui, sans-serif;
+                line-height: 1.6;
+                color: #333;
+            }
+            header {
+                border-bottom: 1px solid #eee;
+                margin-bottom: 2rem;
+                padding-bottom: 1rem;
+            }
+            .post-item {
+                margin-bottom: 2rem;
+            }
+            .post-item h2 {
+                margin-bottom: 0.5rem;
+            }
+            .post-item h2 a {
+                text-decoration: none;
+                color: #222;
+            }
+            .post-item h2 a:hover {
+                color: #0070f3;
+            }
+            .meta {
+                color: #666;
+                font-size: 0.9rem;
+            }
+        </style>
+    </head>
+    <body>
+        <header>
+            <h1>My Rust Blog</h1>
+        </header>
+
+        <main>
+            {% for post in posts %}
+            <div class="post-item">
+                <h2><a href="/post/{{ post.slug }}">{{ post.title }}</a></h2>
+                <div class="meta">
+                    Published on {{ post.created_at | truncate(length=10,
+                    end="") }}
+                </div>
+            </div>
+            {% else %}
+            <p>No posts yet. <a href="/editor">Write something?</a></p>
+            {% endfor %}
+        </main>
+    </body>
+</html>

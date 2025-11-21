@@ -2,11 +2,13 @@
 // mod config;
 mod db;
 mod handlers;
+mod middleware;
 mod models;
 mod utils;
 
 use crate::db::{init_db, AppState};
 use axum::{
+    middleware::from_fn_with_state, // <--- 【在这里添加】
     routing::{get, post},
     Router,
 };
@@ -42,6 +44,13 @@ async fn main() {
 
     // 拼接完整地址
     let addr = format!("{}:{}", host, port);
+    // 【修改这里】只为了打印好看，不影响实际监听
+    // 如果监听的是 0.0.0.0，打印时显示 localhost，方便点击
+    let display_host = if host == "0.0.0.0" {
+        "127.0.0.1"
+    } else {
+        &host
+    };
     // -----------------------------------------------------------
     // [新增] 生成并打印 Admin Token
     // -----------------------------------------------------------
@@ -49,7 +58,10 @@ async fn main() {
     println!("\n============================================================");
     println!("SECURITY ALERT: Admin access requires the following token:");
     println!("Token: {}", admin_token);
-    println!("Editor URL: http://{}/editor?token={}", addr, admin_token);
+    println!(
+        "Editor URL: http://{}:{}/editor?token={}",
+        display_host, port, admin_token
+    );
     println!("============================================================\n");
 
     println!("Connecting to database: {}", db_url);

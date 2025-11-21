@@ -1,16 +1,16 @@
 // src/db.rs
-use rbatis::Rbatis;
+use rbatis::RBatis;
 use rbdc_sqlite::driver::SqliteDriver;
-use std::sync::Arc;
+// use std::sync::Arc;
 
 pub struct AppState {
-    pub rb: Rbatis,
+    pub rb: RBatis,
     pub tera: tera::Tera,
     pub admin_token: String, // [新增] 存储管理密钥
 }
 
-pub async fn init_db(url: &str) -> Rbatis {
-    let rb = Rbatis::new();
+pub async fn init_db(url: &str) -> RBatis {
+    let rb = RBatis::new();
     rb.init(SqliteDriver {}, url).unwrap();
 
     // 初始化表结构 (简单的迁移逻辑)
