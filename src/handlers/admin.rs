@@ -1,5 +1,5 @@
 // src/handlers/admin.rs
-use crate::{db::AppState, models::post::Post};
+use crate::{db::AppState, models::post::Post,book_gen::rebuild_book}; // 引入 rebuild_book
 use axum::{
     extract::{Multipart, Query, State}, // 引入 Query
 
@@ -53,6 +53,16 @@ pub async fn create_post(
     };
 
     let _ = Post::insert(&state.rb, &new_post).await;
+    // ----------------------------------------------------
+        // [新增]：发布成功后，触发 mdBook 构建
+        // ----------------------------------------------------
+        if let Err(e) = rebuild_book(&state.rb).await {
+            eprintln!("Failed to rebuild book: {}", e);
+            return Json(json!({ "status": "error", "message": "Build failed" }));
+        }
+
+        // 返回成功，前端跳转地址改为生成的 HTML 页面地址
+        // mdBook 生成的链接通常是 slug.html
     Json(json!({ "status": "ok", "slug": new_post.slug }))
 }
 

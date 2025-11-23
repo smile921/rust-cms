@@ -64,8 +64,10 @@
                 });
 
                 if (res.ok) {
-                    const data = await res.json();
-                    window.location.href = `/post/${data.slug}`;
+                  const data = await res.json();
+                    // mdBook 生成的文件名通常是 slug.html
+                    // 如果 slug 是纯英文，通常直接拼接.html
+                    window.location.href = `/${data.slug}.html`;
                 } else {
                     alert("Failed to publish: Unauthorized");
                 }

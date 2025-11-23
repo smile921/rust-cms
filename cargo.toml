@@ -11,6 +11,9 @@ tower-http = { version = "0.5", features = ["fs", "trace", "cors"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
+# 添加 mdbook 核心库 (默认功能即可)
+mdbook = { version = "0.4", default-features = false, features = ["search"] }
+
 # Database (Rbatis + SQLite)
 rbatis = "4.5"
 rbs = "4.5"             # <--- 【必须添加这一行】

@@ -1,5 +1,6 @@
 // src/main.rs
 // mod config;
+mod book_gen;
 mod db;
 mod handlers;
 mod middleware;
@@ -90,6 +91,18 @@ async fn main() {
     // 2. 初始化模版引擎
     let tera = Tera::new("templates/**/*").expect("Template parsing error");
 
+    // -------------------------------------------------------
+    // [新增]：启动时先构建一次，确保 book 目录存在
+    // -------------------------------------------------------
+    println!("Initializing mdBook content...");
+    if let Err(e) = book_gen::rebuild_book(&rb).await {
+        eprintln!("Warning: Initial book build failed: {}", e);
+    }
+
+    // mdBook 默认输出目录: data/book_workspace/book
+    let book_output_dir = "data/book_workspace/book";
+    // 确保目录存在，防止 ServeDir 崩溃
+    fs::create_dir_all(book_output_dir).unwrap();
     // 3. 共享状态
     // 将 token 存入 state
     let state = Arc::new(AppState {
@@ -100,29 +113,25 @@ async fn main() {
 
     // 4. 构建路由
     let app = Router::new()
-        // 公开路由 (博客浏览)
-        .route("/", get(handlers::blog::list_posts))
-        .route("/post/:slug", get(handlers::blog::get_post))
+        // 1. 系统静态资源 (编辑器用的 JS/CSS, 上传的图片)
+        // 注意：mdBook 也会生成 css/js，不要跟系统本身的冲突
+        // 这里的 /static 是给编辑器页面用的
         .nest_service("/static", ServeDir::new("static"))
+        // 图片上传目录 (mdBook 里引用图片也用这个路径)
         .nest_service("/uploads", ServeDir::new("static/uploads"))
-        // -------------------------------------------------------
-        // 受保护路由 (需要 Token)
-        // -------------------------------------------------------
+        // 2. 后台管理路由 (动态) - 必须放在静态托管之前匹配
         .nest(
             "/admin",
             Router::new()
-                // 注意：为了方便 URL 结构，我将 /editor 移到了 /admin/editor
-                // 或者你可以保持 /editor，只要用 .route 包裹并 layer 即可
                 .route("/editor", get(handlers::admin::editor_view))
                 .route("/api/posts", post(handlers::admin::create_post))
                 .route("/api/upload", post(handlers::admin::upload_image))
-                // 应用中间件
                 .layer(from_fn_with_state(
                     state.clone(),
                     middleware::auth_middleware,
                 )),
         )
-        // 兼容原来的路径 (如果不想改 path，用这种方式组合)
+        // 兼容旧路由
         .route(
             "/editor",
             get(handlers::admin::editor_view).layer(from_fn_with_state(
@@ -144,6 +153,10 @@ async fn main() {
                 middleware::auth_middleware,
             )),
         )
+        // 3. [核心变更] 博客前台：直接托管 mdBook 生成的 HTML
+        // 只要不是上面的 API 路由，统统去 book 目录找文件
+        // Fallback service 会处理 index.html
+        .fallback_service(ServeDir::new(book_output_dir))
         .with_state(state);
 
     // 5. 启动服务
