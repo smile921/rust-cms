@@ -12,6 +12,10 @@ const BOOK_ROOT: &str = "data/book_workspace";
 pub async fn rebuild_book(rb: &RBatis) -> Result<()> {
     println!("🔄 Starting mdBook build process...");
 
+    // 1. 准备目录
+    let book_root_path = Path::new(BOOK_ROOT);
+    let src_dir = book_root_path.join("src");
+
     // 1. 准备目录结构
     // data/book_workspace/
     // ├── book.toml
@@ -41,6 +45,13 @@ pub async fn rebuild_book(rb: &RBatis) -> Result<()> {
     );
     fs::write(src_dir.join("README.md"), readme_content)?;
 
+    // -----------------------------------------------------------------
+    // 【修复关键点】：创建 custom.css 文件，防止 mdbook 报错
+    // -----------------------------------------------------------------
+    fs::write(
+        book_root_path.join("custom.css"),
+        "/* Add your custom styles here */",
+    )?;
     // 5. 遍历文章，生成 Markdown 文件并写入 SUMMARY
     for post in posts {
         let file_name = format!("{}.md", post.slug);
