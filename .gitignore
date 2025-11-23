@@ -1,1 +1,4 @@
 target/
+
+# 2. mdBook 生成的工作区 (包含源码 md 和生成的 html)
+/data/book_workspace/
