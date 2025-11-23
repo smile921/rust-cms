@@ -1,44 +1,46 @@
-# Stage 1: Build
+# Stage 1: Build 环境
 FROM rust:1.75 as builder
 
 WORKDIR /app
 COPY . .
 
-# 针对 Alpine 静态编译需要 musl 库，这里为了简单使用 debian slim
-# 如果需要极小镜像，可以配置 musl target
+# 编译 Release 版本
+# 注意：这会编译 mdbook 库，第一次构建可能需要几分钟
 RUN cargo build --release
 
-# Stage 2: Runtime
+# Stage 2: Runtime 环境
 FROM debian:bookworm-slim
 
 WORKDIR /app
 
-# 安装 SQLite 运行时依赖 (如果非静态编译)
-RUN apt-get update && apt-get install -y sqlite3 ca-certificates && rm -rf /var/lib/apt/lists/*
+# 安装必要的运行时依赖
+# - ca-certificates: HTTPS 支持
+# - sqlite3: 调试用 (可选)
+# - openssl: 如果你的某些依赖动态链接了 SSL
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    sqlite3 \
+    && rm -rf /var/lib/apt/lists/*
 
-# 复制二进制文件
+# 从构建阶段复制二进制文件
 COPY --from=builder /app/target/release/rust_cms /app/rust_cms
 
-# 复制静态资源和模版
+# 复制模版和静态资源 (编辑器界面需要)
 COPY --from=builder /app/templates /app/templates
 COPY --from=builder /app/static /app/static
 
+# 创建必要的挂载点目录
+RUN mkdir -p data/book_workspace && mkdir -p certs
 
 # 设置环境变量默认值
+ENV RUST_LOG=info
 ENV SERVER_HOST=0.0.0.0
 ENV SERVER_PORT=3000
 ENV DATABASE_URL=sqlite://data/cms.db
+ENV ENABLE_HTTPS=false
 
-
-# 3. 声明卷 (告诉 Docker 这两个目录需要持久化)
-# 虽然这里声明了 VOLUME，但实际运行时最好显式挂载
-VOLUME ["/app/data", "/app/static/uploads"]
-
-# 暴露对应的端口
+# 暴露端口
 EXPOSE 3000
 
-# 创建数据目录
-RUN mkdir -p static/uploads
-
-# 启动命令
+# 启动
 CMD ["./rust_cms"]
